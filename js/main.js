@@ -15,6 +15,56 @@ let topografia=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services
 
 let dark=L.tileLayer('http://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?{foo}', {foo: 'bar', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'}).addTo(map);
 
+
+let orto_barranca=L.esri.dynamicMapLayer({
+  url: 'https://sig.otass.gob.pe/server/rest/services/IMAGENES/ORTOFOTO_EPSBARRANCA/MapServer'
+});
+
+let orto_huaral=L.esri.dynamicMapLayer({
+  url: 'https://sig.otass.gob.pe/server/rest/services/IMAGENES/ORTOFOTO_EMAPAHUARAL/MapServer'
+});
+
+let orto_nasca=L.esri.dynamicMapLayer({
+  url: 'https://www.idep.gob.pe/geoportal/rest/services/IMAGENES/ORTOFOTO_NASCA/MapServer'
+});
+let orto_ica=L.esri.dynamicMapLayer({
+  url: 'https://www.idep.gob.pe/geoportal/rest/services/IMAGENES/ORTOFOTO_ICA/MapServer'
+});
+
+//USGS ULTIMO SISMO
+let magnitud=L.esri.featureLayer({
+    url: 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/USGS_Seismic_Data_v1/FeatureServer/0'
+  }).addTo(map);
+
+  let intensidad=L.esri.featureLayer({
+    url: 'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/USGS_Seismic_Data_v1/FeatureServer/1'
+  }).addTo(map);
+
+//IGP
+let sismos_2021=L.esri.featureLayer({
+  url: 'https://ide.igp.gob.pe/arcgis/rest/services/CENSIS/GEOVISOR/MapServer/1'
+}).addTo(map);
+
+let ultimo_sismo=L.esri.featureLayer({
+  url: 'https://ide.igp.gob.pe/arcgis/rest/services/CENSIS/UltSismoGeoserver/MapServer/0'
+}).addTo(map);
+
+//INGEMMET
+let peligros_geologicos=L.esri.featureLayer({
+  url: 'https://geocatmin.ingemmet.gob.pe/arcgis/rest/services/SERV_PELIGROS_GEOLOGICOS/MapServer/0'
+}).addTo(map);
+
+//CENEPRED
+let inundacion_inven=L.esri.featureLayer({
+  url: 'http://sigrid.cenepred.gob.pe/arcgis/rest/services/Cartografia_Peligros/MapServer/5010100'
+}).addTo(map);
+
+//INDECI
+let geomorfologia=L.esri.featureLayer({
+  url: 'https://geocatmin.ingemmet.gob.pe/arcgis/rest/services/SERV_PELIGROS_GEOLOGICOS/MapServer/0'
+}).addTo(map);
+
+
 var myIcon1 = L.icon({
     iconUrl: 'imagen/ico12.gif',
     iconSize: [30, 50],
@@ -69,9 +119,9 @@ let curvas_regionales = new L.featureGroup();
 let baseMaps = {
     "MAPA BASE CALLES": calles,
     "MAPA BASE RUTAS": rutas,
-    "MAPA BASE BLACK": black,
     "MAPA BASE SATELITE": satelite,
     "MAPA BASE TOPOGRAFIA": topografia,
+    "MAPA BASE BLACK": black,
     "MAPA BASE DARK": dark
 };
 
@@ -98,6 +148,34 @@ let overlayMaps = {
     "TOPOGRAFIA":{
         "Puntos Geodesicos": pto_geodesico_barranca,
         "Curvas Regionales": curvas_regionales
+    }
+};
+
+
+let maps = {
+    "MAPA BASE SATELITE": satelite
+};
+
+let overlay = {
+    "ORTOFOTOS":{
+        "Barranca": orto_barranca,
+        "Huaral": orto_huaral,
+        "Nasca": orto_nasca,
+        "Ica": orto_ica
+    },
+    "USGS-SISMOS":{
+        "Magnitud": magnitud,
+        "intensidad": intensidad
+    },
+    "IGP":{
+      "Sismos 2021": sismos_2021,
+      "Ultimo Sismo": ultimo_sismo
+    },
+    "INGEMMET":{
+        "Peligros Geologicos": peligros_geologicos
+    },
+    "CENEPRED":{
+        "Inundacion Inventario": inundacion_inven
     }
 };
 
@@ -360,4 +438,39 @@ var options = {
   	geojson.addTo(curvas_regionales);
   });
 
+
 L.control.groupedLayers(baseMaps,overlayMaps,options).addTo(map);
+L.control.groupedLayers(maps,overlay).addTo(map);
+L.control.scale({metric:true, position: 'bottomleft'}).addTo(map);
+
+
+// Overview mini map
+var topografy = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+});
+
+var miniMap = new L.Control.MiniMap(topografy, {
+  toggleDisplay: true,
+  minimized: false,
+  position: 'bottomleft'
+}).addTo(map);
+
+// MARCA DE AGUA
+L.Control.Watermark = L.Control.extend({
+    onAdd: function(map) {
+        var img = L.DomUtil.create('img');
+        img.src = 'imagen/logo.png';
+        img.style.width = '200px';
+        return img;
+    },
+
+    onRemove: function(map) {
+        // Nothing to do here
+    }
+});
+
+L.control.watermark = function(opts) {
+    return new L.Control.Watermark(opts);
+}
+
+L.control.watermark({ position: 'bottomright' }).addTo(map);
